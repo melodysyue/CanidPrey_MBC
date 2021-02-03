@@ -1,0 +1,35 @@
+library(tidyverse)
+
+
+rm(list=ls())
+
+###Load data
+#meta
+meta <- read.csv("./data/DataArchive/upload/meta_Sample.csv", header=T)
+
+#presence data
+presence.all <- read.csv("./data/DataArchive/upload/canid.diet.presence.long.csv", header=T)
+
+presence.all.meta.prey <- 
+  left_join(presence.all,meta,by=c("sampleID"="SampleID")) %>% 
+  filter(taxonomy!="Wolf or Coyote")### Calculate the dietary niche width and niche overlap
+
+prey.order=c("Deer","Moose","Elk","Cow","Pig","Snowshoe hare","Deer mouse","Meadow vole","Red squirrel","Ground squirrel","Red-backed vole","Flying squirrel","Rabbit","Muskrat","Chipmunk","Ruffed grouse","Wild turkey","European starling","Spruce grouse")
+
+presence.all.meta.prey$taxonomy <- as.factor(presence.all.meta.prey$taxonomy)
+presence.all.meta.prey$taxonomy <- factor(presence.all.meta.prey$taxonomy, levels=prey.order)
+presence.all.meta.prey$Predator.species.confirmed <- as.factor(presence.all.meta.prey$Predator.species.confirmed)
+presence.all.meta.prey$Predator.species.confirmed <- factor(presence.all.meta.prey$Predator.species.confirmed, levels=c("Wolf", "Coyote"))
+
+meta %>% 
+  filter(Pack=="Smackout" & Season == "Fall") %>% 
+  group_by(Predator.species.confirmed) %>% 
+  summarise(n=n())
+
+presence.all.meta.prey %>% 
+  filter(Pack=="Smackout" & Season == "Fall") %>% 
+  group_by(Predator.species.confirmed,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(Predator.species.confirmed, presence) 
+
+

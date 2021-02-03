@@ -1,0 +1,51 @@
+### Load the packages
+rm(list=ls())
+library(tidyverse)
+library(ggplot2)
+library(viridis)
+library(ggmap)
+library(ggsn)
+
+
+### Get data
+df=read.csv("./1_Sample Selection/NEWA2015-2017_predator.csv")
+names(df)=c("Sample","Predator","lat","lon","Altitude","Session")
+df=df[which(df$Predator=="WOLF" | df$Predator=="COYOTE"),]
+df$Predator=factor(df$Predator,levels=c("WOLF","COYOTE"))
+
+unique(df$Session)
+df2=df[which(df$Session!="Rendz2015" & df$Session!="Summer2015" & df$Session !="Winter2016"),]
+df2$Session=factor(df2$Session,levels=c("Spring2015","Fall2015","Fall2016","Spring2017"))
+summary(df2)
+
+df3=read.csv("./1_Sample Selection/selectedSample.csv")
+table(df3$Predator)
+df3$Predator=factor(df3$Predator,levels=c("WOLF","COYOTE"))
+
+
+### Map selected samples
+range(df3$lon)
+range(df3$lat)
+box_s=make_bbox(lon=c(-117.8,-116.9),lat=c(48,49))
+newa_s=get_map(location=box_s,maptype="terrain",source="google")
+
+
+p <- ggmap(newa_s)+
+  stat_density2d(aes(fill=..nlevel..),alpha=.5,data=df2,geom="polygon")+
+  geom_point(aes(x=lon,y=lat),data=df3, col="red", size=0.5)+
+  scale_fill_viridis() +
+  geom_text(x=-117.8,y=48.8,label="Smackout",size=5,hjust=0,color="black")+
+  geom_text(x=-117.8,y=48.4,label="Dirty Shirt",size=5,hjust=0,color="black")+
+  geom_text(x=-117.3,y=48.8,label="Goodman Meadows",size=5,hjust=0,color="black")+
+  facet_grid(~ Predator, switch="y")+ 
+  coord_fixed(ratio = 1)+
+  theme(strip.text.y = element_text(angle = 180))+
+  labs(x = 'Longitude', y = 'Latitude', fill="Density")+
+  scalebar(
+    x.min=-117.8, x.max=-116.9,
+    y.min=48, y.max=49,
+    dist=10, dist_unit="km", transform = TRUE, model="WGS84",
+    st.size=3)
+
+ggsave("./figures_upload/Fig1_selected_density.pdf",plot=p)
+

@@ -1,0 +1,59 @@
+############################################
+###Samples with DNA from domestic animals###
+###   Yue Shi,University of Washington   ###  
+############################################
+
+
+rm(list=ls())
+library(tidyverse)
+
+#read count data
+count.final.merge <- read.csv("./data/canid.diet.postFiltering_long.csv", header=T)
+count.final.merge$Predator=factor(count.final.merge$Predator, levels=c("Prey","Predator"))
+count.final.merge$Blocking=factor(count.final.merge$Blocking, levels=c("Without blocking primer","With blocking primer"))
+str(count.final.merge)
+
+#presence data
+presence.all <- read.csv("./data/canid.diet.presence.long.csv", header=T)
+#meta
+meta <- read.csv("./data/meta_N202.csv", header=T)
+
+presence.all.meta <- left_join(presence.all, meta, by=c("sampleID"="SampleID"))
+
+
+#pig, rabbit, cow
+
+count.final.merge %>%
+  filter(taxonomy=="Cow" & readCount>0) %>% 
+  group_by(sampleID) %>% 
+  mutate(n=n()) %>% 
+  mutate(avg=sum(readCount)/n) %>% 
+  filter(n>1) %>% 
+  select(sampleID, avg) %>% 
+  unique() %>% 
+  arrange(sampleID) 
+
+count.final.merge %>%
+  filter(sampleName %in% target) %>% 
+  group_by(sampleName) %>%
+  mutate(sum.rep = sum(readCount), 
+         prop = readCount/sum.rep) %>% 
+  filter(taxonomy=="Domestic cow") %>% 
+  group_by(sampleID) %>% 
+  mutate(avg_prop=sum(prop)/n()) %>% 
+  arrange(sampleID) %>% 
+  select(sampleID, avg_prop) %>% 
+  unique()
+  
+  
+### look for read count of domestic animal DNA in negative control
+full <- read.table("./data/DataArchive/upload/canid.diet.obitools.tab", header=T)
+taxa <- read.csv("./data/DataArchive/upload/taxonomy_MOTUs_N348.csv", header=T)
+
+full <- left_join(taxa, full, by=c("query"="id"))
+
+full %>% 
+  filter(taxonomy=="Domestic cow") %>% 
+  select(starts_with("sample.pcr"), starts_with("sample.Extr")) %>% 
+  t() %>% 
+  summary()

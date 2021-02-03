@@ -1,0 +1,1077 @@
+---
+title: 'Diet Profile of Canids: Analysis and Visualization'
+author: "Yue Shi, University of Washington"
+date: "4/20/2019"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '4'
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+### Get it ready
+
+#### Load libraries
+```{r}
+library(tidyverse)
+library(ggrepel)
+library(ggpmisc)
+library(RColorBrewer)
+library(cowplot)
+library(ggmap)
+library(vegan)
+library(FactoMineR)
+library(factoextra)
+library(gplots)
+library(corrplot)
+library(ggpubr)
+```
+
+#### Read the files
+```{r}
+full=read_delim("./data/taxonclassified/canid.diet.final.tab", delim="\t")
+prey=read_csv("./data/taxonclassified/canid.prey.taxonomy.tab.98.csv")
+meta=read.csv("./data/taxonclassified/selectedsample.csv",header=TRUE)
+# ":" will cause problems later on, so change ":" to ".". 
+colnames(full)=gsub(":",".",colnames(full))
+```
+
+#### Organize the files
+```{r}
+dim(meta) #total 202 samples;
+dim(prey) #253 classified prey sequence variants;
+dim(full) #374 classified sequence variants, including prey and predators;
+ng.names <- 
+  full %>%
+  select(starts_with("sample.pcr"), starts_with("sample.Extr")) %>% 
+  names() 
+#92 negative control replicates including PCR and extraction negative controls; 
+length(ng.names)
+
+sp.names <- 
+  full %>% 
+  select(starts_with("sample.")) %>% 
+  select(-starts_with("sample.pcr")) %>% 
+  select(-starts_with("sample.Extr")) %>% 
+  names() 
+#1046 sample replicates. 
+length(sp.names)
+
+```
+
+### Step 01: Combine MOTU table and prey information
+
+```{r}
+full.prey <- 
+  full_join(prey, full, by="id")
+
+full.prey$taxonomy <- 
+  full.prey$taxonomy %>% 
+  replace_na("Predator")
+
+table(full.prey$taxonomy) #how many MOTUs match each species
+head(full.prey)
+summary(full.prey$count)
+```
+
+### Step 02: Remove contamination
+
+First remove any MOTUs of whose frequency across the entire dataset is maximal in negative controls. 
+
+```{r}
+full.prey %>% 
+  mutate(ngmax = pmax(!!!rlang::syms(ng.names))) %>% 
+  mutate(spmax = pmax(!!!rlang::syms(sp.names))) %>% 
+  select(id, taxonomy, ngmax, spmax) %>% 
+  filter(ngmax>=spmax)
+
+# 13 MOTUs have higher or equal abundance in negative controls than those in samples. Thus, remove those 13 MOTUs.
+full.prey.rm <- 
+  full.prey %>% 
+  mutate(ngmax = pmax(!!!rlang::syms(ng.names))) %>% 
+  mutate(spmax = pmax(!!!rlang::syms(sp.names))) %>% 
+  filter(ngmax<spmax)
+```
+
+Second, substract the read count found in negative controls from read count in each sample replicate
+
+```{r}
+full.prey.rm.noctm <- 
+full.prey.rm %>% 
+  select(ngmax, starts_with("sample")) %>% 
+  select(-starts_with("sample.pcr"),-starts_with("sample.Extr")) %>% 
+  as.matrix #sweep only works with matrix
+
+full.prey.rm.noctm <- as.data.frame(sweep(full.prey.rm.noctm[,2:ncol(full.prey.rm.noctm)],1,full.prey.rm.noctm[,1],"-"))
+full.prey.rm.noctm[full.prey.rm.noctm<0]=0 #replace negative values with 0;
+
+full.prey.rm.noctm$id=full.prey.rm$id
+full.prey.rm.noctm<- 
+  full.prey.rm.noctm %>% 
+  select(id,everything()) #add id back
+```
+
+Third, supress the MOTUs count to zero where its relative abundance (abundance in PCR/total abundance across PCRs) is too low, alpha=0.03%.
+
+```{r}
+id=full.prey.rm.noctm[,1]
+full.prey.rm.noctm=full.prey.rm.noctm[,-1]
+rownames(full.prey.rm.noctm)=id
+cutoff <- round(rowSums(full.prey.rm.noctm)*0.0003)
+full.prey.rm.noctm.cutoff <- full.prey.rm.noctm
+full.prey.rm.noctm.cutoff[full.prey.rm.noctm.cutoff<=cutoff]=0
+full.prey.rm.noctm.cutoff=cbind(id,full.prey.rm.noctm.cutoff)
+```
+
+Add taxonomy back by rejoining with prey taxonomy file.
+
+```{r}
+full.prey.rm.noctm.cutoff.prey <- 
+  left_join(full.prey.rm.noctm.cutoff, prey, by="id")
+full.prey.rm.noctm.cutoff.prey$taxonomy <- 
+  full.prey.rm.noctm.cutoff.prey$taxonomy %>% replace_na("Predator")
+table(full.prey.rm.noctm.cutoff.prey$taxonomy) 
+
+#clean up the joined table
+full.prey.rm.noctm.cutoff.prey.clean <- 
+  full.prey.rm.noctm.cutoff.prey %>% 
+  select(id,taxonomy,starts_with("sample.")) %>% 
+  filter(taxonomy!="Human") %>% 
+  filter(taxonomy!="Bobcat") %>% # remove samples with mixtured predator sources
+  gather(key=sampleName, value=readCount,-c("id","taxonomy"))
+
+#remove "sample." from the sampleName
+full.prey.rm.noctm.cutoff.prey.clean$sampleName = gsub("sample.", "",full.prey.rm.noctm.cutoff.prey.clean$sampleName)
+```
+
+### Step 03: Merge sequence variants of the same prey species
+```{r}
+full.prey.rm.noctm.cutoff.prey.clean.merge <- 
+  full.prey.rm.noctm.cutoff.prey.clean %>% 
+  group_by(sampleName, taxonomy) %>% 
+  summarise(readCount=sum(readCount))
+```
+
+### Step 04: Add additional information columns
+```{r}
+full.prey.rm.noctm.cutoff.prey.clean.merge$sampleName=gsub("redo","",full.prey.rm.noctm.cutoff.prey.clean.merge$sampleName)
+full.prey.rm.noctm.cutoff.prey.clean.merge$sampleID=gsub("[^0-9]","",full.prey.rm.noctm.cutoff.prey.clean.merge$sampleName)
+
+full.prey.rm.noctm.cutoff.prey.clean.merge$Predator=full.prey.rm.noctm.cutoff.prey.clean.merge$taxonomy=="Predator"
+full.prey.rm.noctm.cutoff.prey.clean.merge$replicateID=gsub("[[:digit:]]","",full.prey.rm.noctm.cutoff.prey.clean.merge$sampleName)
+full.prey.rm.noctm.cutoff.prey.clean.merge$Blocking=full.prey.rm.noctm.cutoff.prey.clean.merge$replicateID %in% c("D","E","F")
+
+full.prey.rm.noctm.cutoff.prey.clean.merge$Predator=as.factor(full.prey.rm.noctm.cutoff.prey.clean.merge$Predator)
+levels(full.prey.rm.noctm.cutoff.prey.clean.merge$Predator)=c("Prey","Predator")
+full.prey.rm.noctm.cutoff.prey.clean.merge$Blocking=as.factor(full.prey.rm.noctm.cutoff.prey.clean.merge$Blocking)
+levels(full.prey.rm.noctm.cutoff.prey.clean.merge$Blocking)=c("Without blocking primer","With blocking primer")
+```
+
+### Step 05: Check readcount balance among samples
+```{r}
+p_balance=
+  full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName) %>% 
+  summarize(readCount=sum(readCount)) %>% 
+  filter(readCount>0) %>% 
+  ggplot(aes(x=sampleName, y=readCount, label=sampleName))+
+  geom_point(group=1,alpha=0.5)+
+  stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.008)+
+  theme_classic(base_size=15)+
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.x = element_blank())+
+  scale_y_continuous(expand = c(0, 0))+
+  ylab("Read Count")
+p_balance
+ggsave(plot=p_balance,"sequencingblancing.pdf")
+
+p_balance_zoomed=
+  full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName) %>% 
+  summarize(readCount=sum(readCount)) %>% 
+  filter(readCount>0) %>% 
+  ggplot(aes(x=sampleName, y=readCount))+
+  geom_point(group=1,alpha=0.5)+
+  theme_classic(base_size=15)+
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.x = element_blank())+
+  scale_y_continuous(expand = c(0, 0), limits=c(0,5000))+
+  ylab("Read Count")
+p_balance_zoomed
+ggsave(plot=p_balance_zoomed,"sequencingblancing.zoomed.pdf")
+
+p_balance_hist=
+  full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName) %>% 
+  summarize(readCount=sum(readCount)) %>% 
+  filter(readCount>0) %>% 
+  ggplot(aes(x=readCount))+
+  geom_histogram(binwidth=50)+
+  coord_cartesian(xlim=c(0,5000),ylim=c(0,60))+
+  xlab("Read Count")+
+  ylab("N")
+p_balance_hist
+ggsave(plot=p_balance_hist,"sequencingblancing.hist.pdf")
+
+```
+
+### Step 06: Compare diet profile between with blocking primer and without blocking primer
+```{r}
+p_freq_noblk <- 
+  full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName,Blocking) %>% 
+  mutate(readCountSum=sum(readCount)) %>% 
+  filter(readCountSum>0) %>% 
+  mutate(readfreq=readCount/readCountSum) %>%
+  group_by(sampleName,Blocking,Predator) %>% 
+  summarize(readfreq=sum(readfreq)) %>% 
+  filter(Blocking=="Without blocking primer") %>% 
+  ggplot(aes(x=sampleName,y=readfreq,fill=Predator))+
+  geom_bar(stat="identity", na.rm=TRUE)+
+  scale_y_continuous(expand = c(0, 0), limits=c(0,1))+
+  theme_classic(base_size=15)+
+  theme(legend.position="bottom")+
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.title = element_blank())+
+  ylab("Proportion")+
+  scale_fill_brewer(palette="Set1")
+p_freq_noblk
+ggsave(plot=p_freq_noblk,"noblk.pdf")
+
+p_freq_blk <- 
+  full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName,Blocking) %>% 
+  mutate(readCountSum=sum(readCount)) %>% 
+  filter(readCountSum>0) %>% 
+  mutate(readfreq=readCount/readCountSum) %>%
+  group_by(sampleName,Blocking,Predator) %>% 
+  summarize(readfreq=sum(readfreq)) %>% 
+  filter(Blocking=="With blocking primer") %>% 
+  ggplot(aes(x=sampleName,y=readfreq,fill=Predator))+
+  geom_bar(stat="identity", na.rm=TRUE)+
+  scale_y_continuous(expand = c(0, 0), limits=c(0,1))+
+  theme_classic(base_size=15)+
+  theme(legend.position="bottom")+
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.title = element_blank())+
+  ylab("Proportion")+
+  scale_fill_brewer(palette="Set1")
+p_freq_blk
+ggsave(plot=p_freq_blk, "blk.pdf")
+
+p_freq <- 
+  full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName,Blocking) %>% 
+  mutate(readCountSum=sum(readCount)) %>% 
+  filter(readCountSum>0) %>% 
+  mutate(readfreq=readCount/readCountSum) %>%
+  group_by(sampleName,Blocking,Predator) %>% 
+  summarize(readfreq=sum(readfreq)) %>% 
+  ggplot(aes(x=sampleName,y=readfreq,fill=Predator))+
+  geom_bar(stat="identity", na.rm=TRUE)+
+  scale_y_continuous(expand = c(0, 0), limits=c(0,1))+
+  theme_classic(base_size=15)+
+  theme(legend.position="bottom")+
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.title = element_blank())+
+  ylab("Proportion")+
+  scale_fill_brewer(palette="Set1")+
+  facet_grid(~Blocking)
+p_freq
+ggsave(plot=p_freq, "blockingeffects.pdf")
+```
+
+How many extra prey species recovered by adding the blocking primer?
+
+```{r}
+full.prey.rm.noctm.cutoff.prey.clean.merge %>%
+  filter(Predator=="Prey" & readCount>0) %>% 
+  group_by(Blocking, taxonomy) %>% 
+  summarize(n=n()) %>% 
+  spread(Blocking,n) 
+```
+
+All prey species are recovered regardless of adding blocking primer or not. However, blocking primer increases the occurrence of 12 species, however, the occurrence of 3 species is reduced with blocking primer. For the larger project, we want to study diet for multiple carnivore species in the same library prep/sequencing run, we can skip blocking primer. 
+
+Some further statistics
+```{r}
+full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName, Blocking, Predator) %>% 
+  summarize(readCount=sum(readCount)) %>% 
+  group_by(Blocking, Predator) %>% 
+  summarize(min=min(readCount),mean=mean(readCount),max=max(readCount),sum=sum(readCount),
+            '5%'=quantile(readCount, probs=0.05),
+            '10%'=quantile(readCount, probs=0.1),
+            '25%'=quantile(readCount, probs=0.25),
+            "50%"=quantile(readCount, probs=0.5),
+            '75%'=quantile(readCount, probs=0.75),
+            '90%'=quantile(readCount, probs=0.90),
+            '95%'=quantile(readCount, probs=0.95)) %>% 
+  group_by(Blocking) %>% 
+  mutate(prop=sum/sum(sum))
+
+full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName,Blocking) %>% 
+  summarize(readCount=sum(readCount)) %>% 
+  group_by(Blocking) %>% 
+  summarize(min=min(readCount),mean=mean(readCount),max=max(readCount),
+            '5%'=quantile(readCount, probs=0.05),
+            '10%'=quantile(readCount, probs=0.1),
+            '25%'=quantile(readCount, probs=0.25),
+            "50%"=quantile(readCount, probs=0.5),
+            '75%'=quantile(readCount, probs=0.75),
+            '90%'=quantile(readCount, probs=0.90),
+            '95%'=quantile(readCount, probs=0.95))
+
+full.prey.rm.noctm.cutoff.prey.clean.merge %>% 
+  group_by(sampleName) %>% 
+  summarize(readCount=sum(readCount)) %>% 
+  summarize(min=min(readCount),mean=mean(readCount),max=max(readCount),
+            '5%'=quantile(readCount, probs=0.05),
+            '10%'=quantile(readCount, probs=0.1),
+            '25%'=quantile(readCount, probs=0.25),
+            "50%"=quantile(readCount, probs=0.5),
+            '75%'=quantile(readCount, probs=0.75),
+            '90%'=quantile(readCount, probs=0.90),
+            '95%'=quantile(readCount, probs=0.95))
+```
+
+### Step 07: Turn readcount data into presence/absence data
+
+Since the readcount is not balanced among sample replicate, we will only use presence/absence data.
+
+```{r}
+presence.blk <- 
+  full.prey.rm.noctm.cutoff.prey.clean.merge %>%
+  mutate(presence = ifelse(readCount>0, 1, 0)) %>% 
+  group_by(sampleID,taxonomy,Blocking) %>% 
+  summarize(presence=sum(presence)) %>%
+  mutate(presence=ifelse(presence>=2, 1, 0))
+```
+
+Let's compare without and with blocking primer again. 
+```{r}
+presence.blk %>% 
+  group_by(taxonomy, Blocking) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(Blocking, presence)
+
+presence.blk %>% 
+  group_by(taxonomy, Blocking) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(Blocking, presence) %>% 
+  write.csv("blkVsnoblk.csv")
+```
+
+All prey species are recovered regardless of adding blocking primer or not, except for Chipmunk. Blocking primer increase the occurrence count of 9 species, however, the occurrence count of 6 species is reduced with blocking primer. For the larger project, we want to study diet for multiple carnivore species in the same library prep/sequencing run, we can skip blocking primer. 
+
+But for this study, since we have upto 6 replicates per sample and we would like to use all of the information. 
+```{r}
+presence.all <- 
+  full.prey.rm.noctm.cutoff.prey.clean.merge %>%
+  mutate(presence = ifelse(readCount>0, 1, 0)) %>% 
+  group_by(sampleID,taxonomy) %>% 
+  summarize(presence=sum(presence)) %>%
+  mutate(presence=ifelse(presence>=2, 1, 0))
+
+presence.all%>% 
+  group_by(sampleID) %>% 
+  summarize(presence=sum(presence)) %>% 
+  filter(presence==0) #all samples have data;
+```
+
+### Step 08: Add meta table and organize it
+
+```{r}
+names(meta)
+colnames(meta)[2]="predatorID"
+meta$Sample=as.character(meta$Sample)
+meta$season=gsub("[[:digit:]]","",meta$Session)
+
+
+presence.all.meta.prey<- 
+  left_join(presence.all,meta,by=c("sampleID"="Sample")) %>% 
+  filter(taxonomy!="Predator")
+
+table(presence.all.meta.prey$taxonomy)
+prey.order=c("Deer","Moose","Elk","Domestic cow","Pig","Snowshoe hare","Deer mouse","Meadow vole","Red squirrel","Ground squirrel","Red-backed vole","Flying squirrel","Rabbit","Muskrat","Chipmunk","Ruffed grouse","Wild turkey","Common starling","Spruce grouse")
+```
+
+
+### Step 09: Diet comparison by species
+```{r}
+# How many samples used in the final analysis for wolf and coyote?
+presence.all.meta.prey %>% 
+  group_by(predatorID, sampleID) %>% 
+  summarise(n=n()) %>% 
+  group_by(predatorID) %>% 
+  summarise(n())
+
+# Count of occurance of each prey in each predator
+presence.all.meta.prey %>% 
+  group_by(predatorID, season, pack, taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(predatorID, presence) %>% 
+  spread(season,)
+  view
+
+#Turn count data into frequency 
+bysp <- 
+  presence.all.meta.prey %>% 
+  group_by(predatorID,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(predatorID, presence)
+
+bysp$WOLF=bysp$WOLF/99
+bysp$COYOTE=bysp$COYOTE/103
+
+bysp <-
+  bysp %>% 
+  gather(key="predator",value="freq",-1) 
+
+write_csv(bysp,"byspecies.csv")
+
+bysp$taxonomy=as.factor(bysp$taxonomy)
+bysp$taxonomy=factor(bysp$taxonomy,levels=prey.order)
+bysp$predator=as.factor(bysp$predator)
+bysp$predator=factor(bysp$predator, levels=c("WOLF","COYOTE"))
+
+val=colorRampPalette(brewer.pal(11,"Spectral"))(29)
+val.red=val[seq(1,9,2)]
+val.yellow=val[seq(11,20,1)]
+val.blue=val[seq(23,29,2)]
+val.select=c(val.red,val.yellow,val.blue)
+
+p1 <- 
+  bysp %>% 
+  filter(predator=="WOLF") %>% 
+  ggplot(aes(x=taxonomy,y=freq,fill=taxonomy))+
+  geom_bar(stat="identity")+
+  theme_classic(base_size=10)+
+  scale_fill_manual(values=val.select)+
+  scale_x_discrete(limits = rev(levels(bysp$taxonomy)))+
+  scale_y_reverse(expand=c(0,0),limits = c(0.7, 0), breaks = seq(0.7, 0, -0.1))+
+  ylab("Frequency of Occurrence\n(Wolf N=99)")+
+  coord_flip()+
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+p2 <- 
+  bysp %>% 
+  filter(predator=="COYOTE") %>% 
+  ggplot(aes(x=taxonomy,y=freq,fill=taxonomy))+
+  geom_bar(stat="identity")+
+  theme_classic(base_size=10)+
+  scale_fill_manual(values=val.select)+
+  scale_x_discrete(limits = rev(levels(bysp$taxonomy)))+
+  scale_y_continuous(expand = c(0, 0), breaks=seq(0,0.7,0.1), limits=c(0,0.7))+
+  ylab("Frequency of Occurrence\n(Coyote N=103)")+
+  coord_flip()+
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+p3 <- 
+  bysp %>% 
+  filter(predator=="WOLF") %>% 
+  ggplot(aes(x=taxonomy))+
+  geom_text(aes(y=0, label=taxonomy), size=3)+
+  theme_classic(base_size=10)+
+  scale_x_discrete(limits = rev(levels(bysp$taxonomy)))+
+  coord_flip()+
+  theme(axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+p=plot_grid(p1,p3,p2,lables=NULL, ncol = 3,nrow=1, rel_widths = c(4,1,4), align="hv")
+p
+ggsave(plot=p,"dietbyspecies_butterfly.pdf",width=12,height=8)
+```
+
+
+**Who is eating cow?**
+
+```{r}
+## M05712:22:000000000-C88B6:1:1106:13751:22033_CONS	is the 100% cow sequence. 
+presence.all.meta.prey %>% 
+  filter(taxonomy=="Domestic cow" & presence > 0)
+cow <- 
+  presence.all.meta.prey %>% 
+  filter(taxonomy=="Domestic cow" & presence > 0) %>% 
+  select(sampleID) %>% 
+  as.list
+cow=cow$sampleID
+cow
+
+diet_cowsamples <- 
+  presence.all.meta.prey %>% 
+  filter(sampleID %in% cow) %>% 
+  select(sampleID, predatorID, lat, lon, Session, pack, taxonomy, presence) %>% 
+  spread(taxonomy, presence) %>% 
+  arrange(predatorID, pack)
+
+write_csv(diet_cowsamples, "diet_cowsamples.csv")
+```
+
+Larger figure
+
+```{r}
+p1.large <- 
+  bysp %>% 
+  filter(predator=="WOLF") %>% 
+  ggplot(aes(x=taxonomy,y=freq,fill=taxonomy))+
+  geom_bar(stat="identity")+
+  theme_classic(base_size=15)+
+  scale_fill_manual(values=val.select)+
+  scale_x_discrete(limits = rev(levels(bysp$taxonomy)))+
+  scale_y_reverse(expand=c(0,0),limits = c(0.7, 0), breaks = seq(0.7, 0, -0.1))+
+  ylab("Frequency of Occurrence")+
+  coord_flip()+
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+p2.large <- 
+  bysp %>% 
+  filter(predator=="COYOTE") %>% 
+  ggplot(aes(x=taxonomy,y=freq,fill=taxonomy))+
+  geom_bar(stat="identity")+
+  theme_classic(base_size=15)+
+  scale_fill_manual(values=val.select)+
+  scale_x_discrete(limits = rev(levels(bysp$taxonomy)))+
+  scale_y_continuous(expand = c(0, 0), breaks=seq(0,0.7,0.1), limits=c(0,0.7))+
+  ylab("Frequency of Occurrence")+
+  coord_flip()+
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+p3.large <- 
+  bysp %>% 
+  filter(predator=="WOLF") %>% 
+  ggplot(aes(x=taxonomy))+
+  geom_text(aes(y=0, label=taxonomy), size=5)+
+  theme_classic(base_size=15)+
+  scale_x_discrete(limits = rev(levels(bysp$taxonomy)))+
+  coord_flip()+
+  theme(axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+p.large=plot_grid(p1.large,p3.large,p2.large,lables=NULL, ncol = 3,nrow=1, rel_widths = c(4,1.5,4), align="hv")
+p.large
+ggsave(plot=p.large,"dietbyspecies_butterfly_large.pdf",width=12,height=8)
+```
+
+
+**Who is eating cow?**
+
+```{r}
+## M05712:22:000000000-C88B6:1:1106:13751:22033_CONS	is the 100% cow sequence. 
+presence.all.meta.prey %>% 
+  filter(taxonomy=="Domestic cow" & presence > 0)
+cow <- 
+  presence.all.meta.prey %>% 
+  filter(taxonomy=="Domestic cow" & presence > 0) %>% 
+  select(sampleID) %>% 
+  as.list
+cow=cow$sampleID
+cow
+
+diet_cowsamples <- 
+  presence.all.meta.prey %>% 
+  filter(sampleID %in% cow) %>% 
+  select(sampleID, predatorID, lat, lon, Session, pack, taxonomy, presence) %>% 
+  spread(taxonomy, presence) %>% 
+  arrange(predatorID, pack)
+
+write_csv(diet_cowsamples, "diet_cowsamples.csv")
+```
+
+
+### Step 10: Diet by season
+
+```{r}
+# How many samples per species per season?
+presence.all.meta.prey %>% 
+  group_by(predatorID, season, sampleID) %>% 
+  summarise(n=n()) %>% 
+  group_by(predatorID, season) %>% 
+  summarise(n())
+
+presence.all.meta.prey %>% 
+  group_by(predatorID,season,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(predatorID, presence)
+
+byseason <- 
+  presence.all.meta.prey %>% 
+  group_by(predatorID,season,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(predatorID, presence)
+  
+count_coyote=c(rep(35,19), rep(68,19))
+count_wolf=c(rep(55,19), rep(44,19))
+
+byseason$COYOTE=byseason$COYOTE/count_coyote
+byseason$WOLF=byseason$WOLF/count_wolf
+
+byseason <- 
+  byseason %>% 
+  gather(key="predator",value="freq",-1,-2)
+
+byseason %>% 
+  filter(predator=="COYOTE") %>% 
+  spread(key=season,value=freq) %>% 
+  view
+
+byseason$taxonomy=as.factor(byseason$taxonomy)
+byseason$taxonomy=factor(byseason$taxonomy,levels=prey.order)
+byseason$predator=as.factor(byseason$predator)
+byseason$predator=factor(byseason$predator, levels=c("WOLF","COYOTE"))
+byseason$season=as.factor(byseason$season)
+byseason$season=factor(byseason$season, levels=c("Spring","Fall"))
+
+p_byseason <- 
+  byseason %>% 
+  ggplot(aes(x=taxonomy, y=freq, fill=taxonomy))+
+  geom_bar(stat="identity")+
+  scale_fill_manual(values=val.select)+
+  facet_grid(predator~season) +
+  guides(fill = guide_legend(ncol=1)) +
+  theme_classic(base_size=15) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        legend.position="right",
+        legend.title = element_blank())+
+  scale_y_continuous(expand = c(0, 0))+
+  ylab("Frequency of Occurrence")
+ggsave(plot=p_byseason,"dietbyseason.pdf", width=12, height=8)
+p_byseason
+```
+
+### Step 11: Diet by pack
+
+```{r}
+# How many samples per species per season?
+presence.all.meta.prey %>% 
+  group_by(predatorID, pack, sampleID) %>% 
+  summarise(n=n()) %>% 
+  group_by(predatorID, pack) %>% 
+  summarise(n())
+
+presence.all.meta.prey %>% 
+  group_by(predatorID,pack,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(predatorID, presence)
+
+bypack <- 
+  presence.all.meta.prey %>% 
+  group_by(predatorID,pack,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(predatorID, presence)
+  
+count_coyote=c(rep(34,19), rep(35,19), rep(34,19))
+count_wolf=c(rep(28,19), rep(37,19), rep(34,19))
+
+bypack$COYOTE=bypack$COYOTE/count_coyote
+bypack$WOLF=bypack$WOLF/count_wolf
+
+bypack <- 
+  bypack %>% 
+  gather(key="predator",value="freq",-1,-2)
+
+bypack %>% 
+  filter(predator=="COYOTE") %>% 
+  spread(key=pack, value=freq) %>% 
+  view
+
+bypack$taxonomy=as.factor(bypack$taxonomy)
+bypack$taxonomy=factor(bypack$taxonomy,levels=prey.order)
+bypack$predator=as.factor(bypack$predator)
+bypack$predator=factor(bypack$predator, levels=c("WOLF","COYOTE"))
+bypack$pack=as.factor(bypack$pack)
+bypack$pack=factor(bypack$pack, levels=c("Smackout","DirtyShirt","GoodmanMeadow"))
+
+p_bypack <- 
+  bypack %>% 
+  ggplot(aes(x=taxonomy, y=freq, fill=taxonomy))+
+  geom_bar(stat="identity")+
+  scale_fill_manual(values=val.select)+
+  facet_grid(predator~pack) +
+  guides(fill = guide_legend(ncol=1)) +
+  theme_classic(base_size=15) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        legend.position="right",
+        legend.title = element_blank())+
+  scale_y_continuous(expand = c(0, 0))+
+  ylab("Frequency of Occurrence")
+ggsave(plot=p_bypack,"dietbypack.pdf", width=12, height=8)
+p_bypack
+```
+
+### Step 12: Take Noah's suggestion and remake the diet difference between wolf and coyote
+
+```{r}
+bysp.diff <- 
+bysp %>% 
+  spread(key=predator,value=freq) %>% 
+  mutate(diff=COYOTE-WOLF,
+         taxonomy=factor(taxonomy,levels=taxonomy[order(diff,decreasing=TRUE)]),
+         label_y=ifelse(diff<0,0.01,-0.01),
+         label_hjust=ifelse(diff<0,0,1),
+         class=ifelse(diff>0, "COYOTE_more","WOLF_more"))
+
+p_diff <- 
+  bysp.diff %>% 
+  ggplot(aes(x=taxonomy,y=diff,fill=class))+
+  geom_bar(stat="identity")+
+  geom_text(aes(y = label_y, label = taxonomy, hjust = label_hjust, size=10)) +
+  theme_classic(base_size=15)+
+  scale_fill_brewer(palette = "Dark2") +
+  scale_x_discrete(limits = rev(levels(bysp.diff$taxonomy)))+
+  scale_y_continuous(expand=c(0,0),breaks=seq(-0.6,0.6,0.3), limits=c(-0.6,0.6))+
+  ylab("Difference in Frequency of Occurrence between Wolves and Coyotes")+
+  coord_flip()+
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+p_diff
+ggsave(plot=p_diff,"dietbyspecies_difference.pdf",width=12,height=8)
+```
+
+### Step 13: Prepare for the ecological analyses
+
+```{r}
+#Check samples have no prey information, but only predator information. These samples need to be removed for the following analyses
+presence.all.meta.prey.spread <- 
+presence.all.meta.prey %>% 
+  group_by(sampleID) %>% 
+  mutate(presenceSum=sum(presence)) %>% 
+  filter(presenceSum>0) %>% 
+  spread(taxonomy,presence)
+
+prey.names <- 
+  presence.all.meta.prey.spread %>% 
+  ungroup() %>% 
+  select(10:28) %>% 
+  names() 
+
+prey.mat <- 
+  presence.all.meta.prey.spread %>% 
+  ungroup() %>% 
+  select(prey.names) %>% 
+  as.matrix
+
+presence.all.meta.prey.spread.wolf <- 
+  presence.all.meta.prey.spread %>% 
+  ungroup() %>% 
+  filter(predatorID=="WOLF") #94 samples
+
+presence.all.meta.prey.spread.coyote <- 
+  presence.all.meta.prey.spread %>% 
+  ungroup() %>% 
+  filter(predatorID=="COYOTE")  #98 samples
+```
+
+### Step 14: perMANOVA: test difference by species, season and by pack
+
+Differences by species:
+```{r}
+prey.dist=vegdist(prey.mat,method="jaccard") #jaccardd is more suitable for presence/absence data
+set.seed(29)
+prey.sp<-adonis2(prey.dist~predatorID, data=presence.all.meta.prey.spread, permutations = 999, method="jaccard", strata="sampleID")
+prey.sp #significant difference by species
+```
+
+For wolf, is there any significant diet difference among seasons/packs?
+```{r}
+prey.wolf.mat <- 
+  presence.all.meta.prey.spread.wolf %>% 
+  select(prey.names) %>% 
+  as.matrix
+prey.wolf.dist <- vegdist(prey.wolf.mat,method="jaccard") #jaccardd is more suitable for presence/absence data
+set.seed(29)
+prey.wolf.season<-adonis2(prey.wolf.dist~season, data=presence.all.meta.prey.spread.wolf, permutations = 999, method="jaccard", strata="sampleID")
+prey.wolf.pack<-adonis2(prey.wolf.dist~pack, data=presence.all.meta.prey.spread.wolf, permutations = 999, method="jaccard", strata="sampleID")
+prey.wolf.season # not significant
+prey.wolf.pack #significant differences
+```
+
+For coyote, is there any significant diet difference among seasons/packs?
+```{r}
+prey.coyote.mat <- 
+  presence.all.meta.prey.spread.coyote %>% 
+  select(prey.names) %>% 
+  as.matrix
+prey.coyote.dist=vegdist(prey.coyote.mat,method="jaccard") #jaccardd is more suitable for presence/absence data
+set.seed(29)
+prey.coyote.season<-adonis2(prey.coyote.dist~season, data=presence.all.meta.prey.spread.coyote, permutations = 999, method="jaccard", strata="sampleID")
+prey.coyote.pack<-adonis2(prey.coyote.dist~pack, data=presence.all.meta.prey.spread.coyote, permutations = 999, method="jaccard", strata="sampleID")
+prey.coyote.season # significant differences
+prey.coyote.pack #significant differences
+```
+
+### Step 15:NMDS
+A good rule of thumb, stress<0.05 provides an excellent representation in reduced dimensions. <0.1 is great, <0.2 is good, <0.3 is bad. 
+
+NMDS by species
+```{r cache=TRUE}
+NMDS.sp <- metaMDS(prey.mat, distance="jaccard", k=2, trymax=100, autotransform = TRUE) #not converge:()
+species.NMDS = data.frame(NMDS1=NMDS.sp$points[,1], NMDS2=NMDS.sp$points[,2], Predator = presence.all.meta.prey.spread$predatorID, Sample = presence.all.meta.prey.spread$sampleID)
+
+#fit vectors to ordination
+fit.sp<-envfit(NMDS.sp, prey.mat)
+fit.sp
+arrow.sp<-data.frame(fit.sp$vectors$arrows, R = fit.sp$vectors$r, P = fit.sp$vectors$pvals)
+arrow.sp$prey <- rownames(arrow.sp)
+alpha=0.05/19
+arrow.sp.p<-filter(arrow.sp, P <= alpha)
+arrow_style <- arrow(length = unit(0.05, "inches"),
+                     type = "closed")
+
+ggplot(data=species.NMDS, aes(x=NMDS1, y=NMDS2))+
+  geom_point(aes(color=Predator),position=position_jitter(.1), alpha=0.8)+##separates overlapping points
+  stat_ellipse(aes(fill=Predator), alpha=.2,type='t',size =1, geom="polygon")+ ##changes shading on ellipses
+  theme_classic(base_size=15)+
+  geom_segment(data=arrow.sp.p, aes(x=0, y=0, xend=NMDS1, yend=NMDS2), arrow=arrow_style) + ##add arrows (scaled by R-squared value) 
+  geom_text_repel(data = arrow.sp.p, aes(x = NMDS1, y = NMDS2, label = prey),size=4, box.padding = 0.5) +
+  scale_color_brewer(palette="Dark2")+
+  annotate("text", x=min(species.NMDS$NMDS1), y=min(species.NMDS$NMDS2), label=paste('Stress =',round(NMDS.sp$stress,3)))
+# the outlider is sample 6311, which is coyote with only 1 prey species info: common starling. 
+
+species.NMDS.rm <- 
+  species.NMDS %>% 
+  filter(Sample!=6311)
+arrow.sp.p.rm<-filter(arrow.sp.p, prey != "Common starling")
+
+p.nmds.sp <- 
+  ggplot(data=species.NMDS.rm, aes(x=NMDS1, y=NMDS2))+
+  geom_point(aes(color=Predator),position=position_jitter(.1), alpha=0.8)+##separates overlapping points
+  stat_ellipse(aes(fill=Predator), alpha=.2,type='t',size =1, geom="polygon")+ ##changes shading on ellipses
+  theme_classic(base_size=15)+
+  geom_segment(data=arrow.sp.p.rm, aes(x=0, y=0, xend=NMDS1, yend=NMDS2), arrow=arrow_style) + ##add arrows (scaled by R-squared value) 
+  geom_text_repel(data = arrow.sp.p.rm, aes(x = NMDS1, y = NMDS2, label = prey),size=4, box.padding = 0.5) +
+  scale_color_brewer(palette="Dark2")+
+  annotate("text", x=min(species.NMDS.rm$NMDS1), y=min(species.NMDS.rm$NMDS2), label=paste('Stress =',round(NMDS.sp$stress,3)))
+
+ggsave("NMDS.sp.pdf", plot=p.nmds.sp, width=12, height=8)
+p.nmds.sp
+```
+
+### Step 16: Correspondence Analysis (CA)
+
+In order to examine the strength of association between carnivores and their prey, we use CA which uses a contigency table of prey count data by carnivore to examine the statistical difference in partitioning of prey species. 
+
+Prepare
+```{r}
+presence.all.meta.prey$predatorID=factor(presence.all.meta.prey$predatorID, levels=c("WOLF","COYOTE"))
+presence.all.meta.prey$taxonomy=as.factor(presence.all.meta.prey$taxonomy)
+presence.all.meta.prey$taxonomy=factor(presence.all.meta.prey$taxonomy,levels=prey.order)
+```
+#### CA analysis by species
+```{r}
+bysp.count <- 
+  presence.all.meta.prey %>% 
+  group_by(predatorID,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(predatorID, presence) %>% 
+  remove_rownames %>% 
+  column_to_rownames(var="taxonomy") %>% 
+  as.matrix() %>% 
+  as.table()
+
+pdf("sp.balloon.pdf", width=12, height=8)
+balloonplot(t(bysp.count), main ="", xlab ="", ylab="",
+            label = TRUE, show.margins = FALSE)
+dev.off()
+
+bysp.count
+ca.sp <- CA(bysp.count, graph=FALSE)
+print(ca.sp)
+
+#get eigenvalues
+get_eigenvalue(ca.sp) #it seems like only one dimension is enough
+#get coord and contirbution
+col.sp <- ca.sp$col 
+row.sp <- ca.sp$row
+col.sp #wolf:negative; coyote: positive
+row.sp
+wolf.sp <- names(row.sp$coord[row.sp$coord<0]) #contribute to wolf diet
+coyote.sp <- names(row.sp$coord[row.sp$coord>0]) #contribute to coyote diet
+
+sort(row.sp$contrib[wolf.sp], decreasing=TRUE)
+sort(row.sp$contrib[coyote.sp], decreasing=TRUE)
+```
+
+#### CA analysis by seasons
+
+Since there is no significant difference between seasons for wolf. Therefore, we only conducted analysis on coyote.
+
+For coyotes
+```{r}
+coyote.season.count <- 
+  presence.all.meta.prey %>% 
+  filter(predatorID=="COYOTE") %>% 
+  group_by(season,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(season, presence) %>% 
+  filter_at(vars(-taxonomy), any_vars(. != 0)) %>% 
+  column_to_rownames(var="taxonomy") %>% #remove rows with zero count
+  as.matrix() %>% 
+  as.table()
+ca.coysea <- CA(coyote.season.count, graph=FALSE)
+print(ca.coysea)
+get_eigenvalue(ca.coysea)
+ca.coysea$col
+row.sea <- ca.coysea$row
+
+fall.sp <- names(row.sea$coord[row.sea$coord<0]) #contribute to wolf diet
+spring.sp <- names(row.sea$coord[row.sea$coord>0]) #contribute to coyote diet
+
+sort(row.sea$contrib[fall.sp], decreasing=TRUE)
+sort(row.sea$contrib[spring.sp], decreasing=TRUE)
+```
+
+
+
+#### CA analysis by pack
+
+For wolf
+```{r}
+wolf.pack.count <- 
+  presence.all.meta.prey %>% 
+  filter(predatorID=="WOLF") %>% 
+  group_by(pack,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(pack, presence) %>% 
+  filter_at(vars(-taxonomy), any_vars(. != 0)) %>% 
+  column_to_rownames(var="taxonomy") %>% #remove rows with zero count
+  as.matrix() %>% 
+  as.table()
+balloonplot(t(wolf.pack.count), main ="", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+chisq.test(wolf.pack.count)
+ca.wolf.pack <- CA(wolf.pack.count, graph=FALSE)
+print(ca.wolf.pack)
+summary(ca.wolf.pack)
+get_eigenvalue(ca.wolf.pack)
+wp_1 <- fviz_ca_biplot(ca.wolf.pack, repel=TRUE, title="")
+wp_2 <- fviz_ca_biplot(ca.wolf.pack, 
+               map ="rowprincipal", arrow = c(TRUE, TRUE),
+               repel = TRUE, title="WOLF")
+ggexport(plotlist=list(wp_1,wp_2), ncol=2,width=24, height=8,  filename="wolfpack_ca.pdf")
+```
+
+For coyote
+```{r}
+coyote.pack.count <- 
+  presence.all.meta.prey %>% 
+  filter(predatorID=="COYOTE") %>% 
+  group_by(pack,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(pack, presence) %>% 
+  filter_at(vars(-taxonomy), any_vars(. != 0)) %>% 
+  column_to_rownames(var="taxonomy") %>% #remove rows with zero count
+  as.matrix() %>% 
+  as.table()
+balloonplot(t(coyote.pack.count), main ="", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+chisq.test(coyote.pack.count)
+ca.coyote.pack <- CA(coyote.pack.count, graph=FALSE)
+print(ca.coyote.pack)
+summary(ca.coyote.pack)
+get_eigenvalue(ca.coyote.pack)
+cp_1 <- fviz_ca_biplot(ca.coyote.pack, repel=TRUE, title="")
+cp_2 <- fviz_ca_biplot(ca.coyote.pack, 
+               map ="rowprincipal", arrow = c(TRUE, TRUE),
+               repel = TRUE, title="COYOTE")
+
+ggexport(plotlist=list(cp_1, cp_2), ncol=2, width=24, height=8,  filename="coyotepack_ca.pdf")
+ggexport(plotlist=list(wp_2, cp_2), ncol=2, width=16, height=8,  filename="packca_asym.pdf")
+
+```
+
+### Step 17: Calculate dietary niche width and niche overlap.
+
+For Wolf:
+```{r}
+
+presence.all.meta.prey %>% 
+  filter(predatorID=="WOLF") %>% 
+  group_by(pack,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(pack, presence) %>%
+  write.csv(.,file = "wolfpack.csv")
+  
+
+presence.all.meta.prey %>% 
+  filter(predatorID=="WOLF") %>% 
+  group_by(season,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(season, presence) %>% 
+  write.csv(.,file = "wolfseason.csv")
+
+
+presence.all.meta.prey %>% 
+  filter(predatorID=="COYOTE") %>% 
+  group_by(pack,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(pack, presence) %>% 
+  write.csv(.,file = "coyotepack.csv")
+
+
+presence.all.meta.prey %>% 
+  filter(predatorID=="COYOTE") %>% 
+  group_by(season,taxonomy) %>% 
+  summarise(presence=sum(presence)) %>% 
+  spread(season, presence) %>% 
+  write.csv(.,file = "coyoteseason.csv")
+
+```
+
+

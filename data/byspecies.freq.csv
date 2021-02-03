@@ -1,0 +1,39 @@
+taxonomy,predator,freq
+Chipmunk,Coyote,0.00970873786407767
+Cow,Coyote,0.0194174757281553
+Deer,Coyote,0.213592233009709
+Deer mouse,Coyote,0.12621359223301
+Elk,Coyote,0.058252427184466
+European starling,Coyote,0.00970873786407767
+Flying squirrel,Coyote,0.029126213592233
+Ground squirrel,Coyote,0.058252427184466
+Meadow vole,Coyote,0.0776699029126214
+Moose,Coyote,0.300970873786408
+Muskrat,Coyote,0.0194174757281553
+Pig,Coyote,0
+Rabbit,Coyote,0.0194174757281553
+Red squirrel,Coyote,0.0679611650485437
+Red-backed vole,Coyote,0.0485436893203883
+Ruffed grouse,Coyote,0.0776699029126214
+Snowshoe hare,Coyote,0.611650485436893
+Spruce grouse,Coyote,0.00970873786407767
+Wild turkey,Coyote,0.029126213592233
+Chipmunk,Wolf,0
+Cow,Wolf,0.161616161616162
+Deer,Wolf,0.474747474747475
+Deer mouse,Wolf,0.0303030303030303
+Elk,Wolf,0.171717171717172
+European starling,Wolf,0.0101010101010101
+Flying squirrel,Wolf,0
+Ground squirrel,Wolf,0
+Meadow vole,Wolf,0.0202020202020202
+Moose,Wolf,0.424242424242424
+Muskrat,Wolf,0
+Pig,Wolf,0.0404040404040404
+Rabbit,Wolf,0
+Red squirrel,Wolf,0.0303030303030303
+Red-backed vole,Wolf,0
+Ruffed grouse,Wolf,0.0303030303030303
+Snowshoe hare,Wolf,0.0909090909090909
+Spruce grouse,Wolf,0
+Wild turkey,Wolf,0

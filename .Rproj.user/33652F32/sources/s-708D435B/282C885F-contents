@@ -1,0 +1,164 @@
+########################################################
+### Diet analyses using relative read abundance RRA ###
+###        Yue Shi,University of Washington         ###  
+#######################################################
+
+### Load libraries
+library(tidyverse)
+library(RColorBrewer)
+library(cowplot)
+library(ggrepel)
+library(patchwork)
+
+### Load data
+rm(list=ls())
+count.final.merge <- read.csv("./data/canid.diet.postFiltering_long.csv", header=T)
+presence.all <- read.csv("./data/canid.diet.presence.long.csv", header=T)
+meta <- read.csv("./data/meta_N202.csv", header=T)
+
+### Combine the read count of each prey item with confirmed presence across 6 replicates. 
+count.final.merge.rra <- 
+  count.final.merge %>% 
+  group_by(sampleID, taxonomy) %>% 
+  summarise(readCount=sum(readCount))
+
+rra.presence <- 
+  left_join(count.final.merge.rra, presence.all, by=c("sampleID", "taxonomy"))
+
+rra.presence$readCount[rra.presence$presence==0]=0 #if the presence of a prey item is unconfirmed, turn it read count to 0; 
+
+
+### Add meta data
+rra.presence.all.meta.prey <- 
+  left_join(rra.presence,meta,by=c("sampleID"="SampleID")) %>% 
+  filter(taxonomy!="Wolf or Coyote")
+
+table(rra.presence.all.meta.prey$taxonomy)
+prey.order=c("Cow", "Moose", "Elk", "Pig", "Deer", 
+             "Rabbit", "Snowshoe hare", "Muskrat", "Ground squirrel","Red squirrel", 
+             "Flying squirrel", "Chipmunk", "Meadow vole", "Red-backed vole", "Deer mouse",
+             "Wild turkey","Ruffed grouse", "Spruce grouse", "European starling")
+
+
+### Diet comparison by species using Relative Read Abundance or RRA
+
+# Sum the read count for each prey for each sample, and calculate the proportion per sample
+bysp.rra <- 
+  rra.presence.all.meta.prey %>% 
+  group_by(sampleID) %>% 
+  mutate(perc=readCount/sum(readCount))
+
+bysp.rra$perc[is.nan(bysp.rra$perc)]=0
+
+
+bysp.rra <- 
+  bysp.rra %>% 
+  select(-readCount, -presence) %>% 
+  group_by(Predator.species.confirmed, taxonomy) %>% 
+  mutate(meanperc=mean(perc)) %>% 
+  select(Predator.species.confirmed, taxonomy, meanperc) %>% 
+  distinct()
+
+bysp.rra$taxonomy=as.factor(bysp.rra$taxonomy)
+bysp.rra$taxonomy=factor(bysp.rra$taxonomy,levels=prey.order)
+bysp.rra$Predator.species.confirmed=as.factor(bysp.rra$Predator.species.confirmed)
+bysp.rra$Predator.species.confirmed=factor(bysp.rra$Predator.species.confirmed, levels=c("Wolf","Coyote"))
+
+
+### Plot it
+#prepare the colors
+val=colorRampPalette(brewer.pal(11,"Spectral"))(29)
+val.red=val[seq(1,9,2)]
+val.yellow=val[seq(11,20,1)]
+val.blue=val[seq(23,29,2)]
+val.select=c(val.red,val.yellow,val.blue)
+
+
+p1.rra <- 
+  bysp.rra %>% 
+  filter(Predator.species.confirmed=="Wolf") %>% 
+  ggplot(aes(x=taxonomy,y=meanperc,fill=taxonomy))+
+  geom_bar(stat="identity")+
+  theme_classic(base_size=15)+
+  scale_fill_manual(values=val.select)+
+  scale_x_discrete(limits = rev(levels(bysp.rra$taxonomy)))+
+  scale_y_reverse(expand=c(0,0),limits = c(0.7, 0), breaks = seq(0.7, 0, -0.1))+
+  ylab("Average Relative Read Abundance\nWolf N=99")+
+  coord_flip()+
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+
+p2.rra <- 
+  bysp.rra %>% 
+  filter(Predator.species.confirmed=="Coyote") %>% 
+  ggplot(aes(x=taxonomy,y=meanperc,fill=taxonomy))+
+  geom_bar(stat="identity")+
+  theme_classic(base_size=15)+
+  scale_fill_manual(values=val.select)+
+  scale_x_discrete(limits = rev(levels(bysp.rra$taxonomy)))+
+  scale_y_continuous(expand = c(0, 0), breaks=seq(0,0.7,0.1), limits=c(0,0.7))+
+  ylab("Average Relative Read Abundance\nCoyote N=103")+
+  coord_flip()+
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+p3.rra <- 
+  bysp.rra %>% 
+  filter(Predator.species.confirmed=="Wolf") %>% 
+  ggplot(aes(x=taxonomy))+
+  geom_text(aes(y=0, label=taxonomy), size=5)+
+  theme_classic(base_size=15)+
+  scale_x_discrete(limits = rev(levels(bysp.rra$taxonomy)))+
+  coord_flip()+
+  theme(axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        legend.position="none",
+        legend.title = element_blank())
+
+
+p.rra=plot_grid(p1.rra,p3.rra,p2.rra,lables=NULL, ncol = 3,nrow=1, rel_widths = c(4,1.5,4), align="hv")
+p.rra
+
+
+###FOO vs RRA
+foo <- read.csv("./data/byspecies.freq.csv", header=T)
+head(foo)
+head(bysp.rra)
+
+foo.rra <- left_join(foo, bysp.rra, by=c("predator"="Predator.species.confirmed", "taxonomy"))
+head(foo.rra)
+
+foo.rra$predator <- as.factor(foo.rra$predator)
+foo.rra$predator <- factor(foo.rra$predator, levels=c("Wolf", "Coyote")) 
+
+foo.rra %>% 
+  mutate(diff=round(freq-meanperc, 2)) %>% 
+  arrange(predator,desc(diff))
+  
+p.compare <- foo.rra %>% 
+  ggplot(aes(x=freq, y=meanperc)) +
+  geom_point()+
+  geom_text_repel(aes(label=taxonomy), size=4)+
+  geom_abline(slope=1, intercept = 0, color="red")+
+  theme_bw(base_size = 15)+
+  xlab("Frequency of Occurrence")+
+  ylab("Average Relative Read Abundance")+
+  facet_wrap(~predator, dir="v")
+
+
+#pdf("./figures/SuppFig1_dietbyspecies_butterfly_rra.pdf",width=18,height=12)
+p.rra + p.compare +
+  plot_layout(widths = c(2, 1))+
+  plot_annotation(tag_levels = "A")
+#dev.off()

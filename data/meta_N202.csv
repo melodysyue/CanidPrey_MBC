@@ -1,0 +1,203 @@
+SampleID,Season,Date,Latitude,Longitude,Pack,Predator.species.confirmed,Scientific.name
+1215,Spring,4/12/15,48.78918833,-117.6004317,Smackout,Coyote,Canis latrans
+1216,Spring,4/12/15,48.78879,-117.5997617,Smackout,Coyote,Canis latrans
+1545,Spring,4/28/15,48.68457,-117.20679,Goodman Meadows,Coyote,Canis latrans
+163033,Fall,10/27/16,48.55302,-117.068825,Goodman Meadows,Wolf,Canis lupus
+163036,Fall,10/27/16,48.55446,-117.072102,Goodman Meadows,Coyote,Canis latrans
+163038,Fall,10/27/16,48.547423,-117.08055,Goodman Meadows,Coyote,Canis latrans
+163043,Fall,10/27/16,48.537747,-117.076183,Goodman Meadows,Coyote,Canis latrans
+163044,Fall,10/27/16,48.53561,-117.074347,Goodman Meadows,Coyote,Canis latrans
+163047,Fall,10/30/16,48.278172,-117.496542,Dirty Shirt,Coyote,Canis latrans
+163048,Fall,10/30/16,48.275918,-117.493963,Dirty Shirt,Coyote,Canis latrans
+163056,Fall,10/30/16,48.255508,-117.499598,Dirty Shirt,Wolf,Canis lupus
+163076,Fall,10/30/16,48.273095,-117.508203,Dirty Shirt,Coyote,Canis latrans
+1635,Spring,5/3/15,48.60919833,-117.059925,Goodman Meadows,Wolf,Canis lupus
+163634,Fall,11/15/16,48.757933,-117.504577,Smackout,Coyote,Canis latrans
+163638,Fall,11/15/16,48.738985,-117.502253,Smackout,Wolf,Canis lupus
+163641,Fall,11/15/16,48.729488,-117.533707,Smackout,Coyote,Canis latrans
+164000,Fall,10/23/16,48.804325,-117.581315,Smackout,Coyote,Canis latrans
+164004,Fall,10/23/16,48.802668,-117.590407,Smackout,Coyote,Canis latrans
+164005,Fall,10/23/16,48.801377,-117.589475,Smackout,Wolf,Canis lupus
+164007,Fall,10/23/16,48.801198,-117.589412,Smackout,Wolf,Canis lupus
+164008,Fall,10/23/16,48.800765,-117.588922,Smackout,Wolf,Canis lupus
+164010,Fall,10/23/16,48.80038,-117.586287,Smackout,Wolf,Canis lupus
+164011,Fall,10/23/16,48.800423,-117.58621,Smackout,Wolf,Canis lupus
+164077,Fall,10/30/16,48.294347,-117.464393,Dirty Shirt,Wolf,Canis lupus
+164079,Fall,10/30/16,48.293972,-117.462793,Dirty Shirt,Coyote,Canis latrans
+164086,Fall,10/30/16,48.301835,-117.459193,Dirty Shirt,Wolf,Canis lupus
+164087,Fall,10/30/16,48.30538,-117.462312,Dirty Shirt,Coyote,Canis latrans
+164088,Fall,10/30/16,48.305562,-117.467055,Dirty Shirt,Coyote,Canis latrans
+164189,Fall,11/6/16,48.65986,-117.462758,Smackout,Wolf,Canis lupus
+164263,Fall,11/15/16,48.791153,-117.599163,Smackout,Coyote,Canis latrans
+164576,Fall,10/30/16,48.299062,-117.484002,Dirty Shirt,Wolf,Canis lupus
+164577,Fall,10/30/16,48.29959,-117.484457,Dirty Shirt,Wolf,Canis lupus
+164579,Fall,10/30/16,48.30079,-117.486233,Dirty Shirt,Wolf,Canis lupus
+164580,Fall,10/30/16,48.302075,-117.486843,Dirty Shirt,Wolf,Canis lupus
+164584,Fall,10/30/16,48.301755,-117.495077,Dirty Shirt,Coyote,Canis latrans
+164743,Fall,11/16/16,48.70011,-117.530245,Smackout,Wolf,Canis lupus
+164748,Fall,11/16/16,48.703803,-117.534768,Smackout,Wolf,Canis lupus
+164749,Fall,11/16/16,48.7052,-117.534543,Smackout,Wolf,Canis lupus
+170043,Spring,4/5/17,48.61072833,-117.217765,Goodman Meadows,Coyote,Canis latrans
+170055,Spring,4/5/17,48.60594333,-117.2026733,Goodman Meadows,Coyote,Canis latrans
+170091,Spring,4/9/17,48.66685667,-117.4452533,Smackout,Wolf,Canis lupus
+170092,Spring,4/9/17,48.66852833,-117.4492533,Smackout,Wolf,Canis lupus
+170521,Spring,4/12/17,48.27444,-117.4598983,Dirty Shirt,Wolf,Canis lupus
+170551,Spring,4/15/17,48.73366167,-117.5228633,Smackout,Coyote,Canis latrans
+170552,Spring,4/15/17,48.73337333,-117.53278,Smackout,Coyote,Canis latrans
+170553,Spring,4/15/17,48.73030833,-117.5292233,Smackout,Coyote,Canis latrans
+170555,Spring,4/15/17,48.73435833,-117.5238067,Smackout,Coyote,Canis latrans
+170557,Spring,4/15/17,48.73711333,-117.5193533,Smackout,Coyote,Canis latrans
+170558,Spring,4/15/17,48.73612667,-117.519865,Smackout,Coyote,Canis latrans
+170859,Spring,4/16/17,48.80452333,-117.581695,Smackout,Wolf,Canis lupus
+170969,Spring,4/16/17,48.79780167,-117.5758433,Smackout,Coyote,Canis latrans
+170977,Spring,4/16/17,48.80412333,-117.58821,Smackout,Wolf,Canis lupus
+170979,Spring,4/16/17,48.80215833,-117.5865783,Smackout,Wolf,Canis lupus
+170980,Spring,4/16/17,48.80052,-117.5854267,Smackout,Wolf,Canis lupus
+170981,Spring,4/16/17,48.799845,-117.584295,Smackout,Wolf,Canis lupus
+170982,Spring,4/16/17,48.799185,-117.5839833,Smackout,Wolf,Canis lupus
+170983,Spring,4/16/17,48.79350667,-117.592865,Smackout,Wolf,Canis lupus
+170992,Spring,4/16/17,48.80150667,-117.5939067,Smackout,Wolf,Canis lupus
+170,Spring,4/12/15,48.75635333,-117.5044217,Smackout,Coyote,Canis latrans
+171330,Spring,4/26/17,48.28294833,-117.4907267,Dirty Shirt,Wolf,Canis lupus
+171334,Spring,4/26/17,48.28047,-117.493405,Dirty Shirt,Coyote,Canis latrans
+171348,Spring,4/26/17,48.2769,-117.499655,Dirty Shirt,Coyote,Canis latrans
+171401,Spring,4/24/17,48.29011667,-117.4838033,Dirty Shirt,Coyote,Canis latrans
+171407,Spring,4/24/17,48.293525,-117.4786867,Dirty Shirt,Wolf,Canis lupus
+171413,Spring,4/24/17,48.29195333,-117.458965,Dirty Shirt,Coyote,Canis latrans
+171414,Spring,4/24/17,48.29517333,-117.4559483,Dirty Shirt,Wolf,Canis lupus
+171421,Spring,4/26/17,48.642425,-117.217435,Goodman Meadows,Coyote,Canis latrans
+171425,Spring,4/26/17,48.647005,-117.2051517,Goodman Meadows,Coyote,Canis latrans
+171554,Spring,4/29/17,48.63406833,-117.2188017,Goodman Meadows,Coyote,Canis latrans
+171913,Spring,5/6/17,48.80546833,-117.598665,Smackout,Wolf,Canis lupus
+171,Spring,4/12/15,48.75636667,-117.50427,Smackout,Coyote,Canis latrans
+172044,Spring,5/7/17,48.72479333,-117.5248067,Smackout,Coyote,Canis latrans
+172047,Spring,5/7/17,48.72707833,-117.5301567,Smackout,Coyote,Canis latrans
+172048,Spring,5/7/17,48.7283,-117.5317217,Smackout,Coyote,Canis latrans
+172,Spring,4/12/15,48.76034667,-117.506835,Smackout,Coyote,Canis latrans
+173038,Spring,5/9/17,48.25207833,-117.4838033,Dirty Shirt,Wolf,Canis lupus
+173040,Spring,5/9/17,48.24934333,-117.4883533,Dirty Shirt,Wolf,Canis lupus
+173041,Spring,5/9/17,48.24733167,-117.4882417,Dirty Shirt,Wolf,Canis lupus
+175,Spring,4/12/15,48.76219167,-117.5027367,Smackout,Coyote,Canis latrans
+176,Spring,4/12/15,48.76117333,-117.50274,Smackout,Coyote,Canis latrans
+177,Spring,4/12/15,48.75973167,-117.5030667,Smackout,Coyote,Canis latrans
+183,Spring,4/12/15,48.75452,-117.4914533,Smackout,Coyote,Canis latrans
+203,Spring,4/12/15,48.77347833,-117.5121983,Smackout,Coyote,Canis latrans
+204,Spring,4/12/15,48.77331833,-117.5123017,Smackout,Coyote,Canis latrans
+2141,Spring,4/10/15,48.274115,-117.501685,Dirty Shirt,Coyote,Canis latrans
+2155,Spring,4/10/15,48.27527,-117.50419,Dirty Shirt,Coyote,Canis latrans
+2623,Spring,5/3/15,48.568545,-117.0741817,Goodman Meadows,Coyote,Canis latrans
+2636,Spring,5/3/15,48.55999167,-117.09006,Goodman Meadows,Wolf,Canis lupus
+2645,Spring,5/3/15,48.55839667,-117.0794767,Goodman Meadows,Wolf,Canis lupus
+2648,Spring,5/3/15,48.55847833,-117.0789783,Goodman Meadows,Coyote,Canis latrans
+2649,Spring,5/3/15,48.55827667,-117.0778867,Goodman Meadows,Coyote,Canis latrans
+2650,Spring,5/3/15,48.56015667,-117.07318,Goodman Meadows,Coyote,Canis latrans
+285,Spring,4/16/15,48.66427,-117.217635,Goodman Meadows,Wolf,Canis lupus
+287,Spring,4/16/15,48.66346833,-117.21853,Goodman Meadows,Wolf,Canis lupus
+290,Spring,4/16/15,48.66242667,-117.21864,Goodman Meadows,Wolf,Canis lupus
+297,Spring,4/16/15,48.65977333,-117.2190167,Goodman Meadows,Wolf,Canis lupus
+303,Spring,4/16/15,48.660115,-117.220095,Goodman Meadows,Wolf,Canis lupus
+308,Spring,4/16/15,48.660315,-117.221325,Goodman Meadows,Wolf,Canis lupus
+311,Spring,4/16/15,48.66121667,-117.2227183,Goodman Meadows,Wolf,Canis lupus
+313,Spring,4/16/15,48.66175833,-117.223785,Goodman Meadows,Wolf,Canis lupus
+573,Spring,4/28/15,48.60549,-117.2053883,Goodman Meadows,Coyote,Canis latrans
+575,Spring,4/28/15,48.60595167,-117.20238,Goodman Meadows,Coyote,Canis latrans
+613,Spring,4/28/15,48.61813,-117.2266283,Goodman Meadows,Coyote,Canis latrans
+621,Spring,4/28/15,48.62185167,-117.226325,Goodman Meadows,Coyote,Canis latrans
+6310,Fall,11/5/15,48.570315,-117.0754333,Goodman Meadows,Coyote,Canis latrans
+6311,Fall,11/5/15,48.57341333,-117.0815883,Goodman Meadows,Coyote,Canis latrans
+6316,Fall,11/5/15,48.57440167,-117.09918,Goodman Meadows,Wolf,Canis lupus
+6317,Fall,11/5/15,48.56833667,-117.0965833,Goodman Meadows,Wolf,Canis lupus
+6318,Fall,11/5/15,48.56734,-117.096075,Goodman Meadows,Wolf,Canis lupus
+6322,Fall,11/5/15,48.55847333,-117.07974,Goodman Meadows,Coyote,Canis latrans
+6323,Fall,11/5/15,48.55833167,-117.0778283,Goodman Meadows,Coyote,Canis latrans
+6324,Fall,11/5/15,48.55836,-117.0776617,Goodman Meadows,Wolf,Canis lupus
+6325,Fall,11/5/15,48.55846333,-117.0770983,Goodman Meadows,Coyote,Canis latrans
+6327,Fall,11/5/15,48.55971667,-117.0740083,Goodman Meadows,Coyote,Canis latrans
+6341,Fall,11/8/15,48.728865,-117.5158533,Smackout,Coyote,Canis latrans
+6342,Fall,11/8/15,48.72523667,-117.5166367,Smackout,Coyote,Canis latrans
+6344,Fall,11/8/15,48.727935,-117.5109267,Smackout,Coyote,Canis latrans
+641,Spring,4/30/15,48.27087667,-117.5125467,Dirty Shirt,Coyote,Canis latrans
+644,Spring,4/30/15,48.27087,-117.5125483,Dirty Shirt,Coyote,Canis latrans
+646,Spring,4/30/15,48.270735,-117.5110983,Dirty Shirt,Coyote,Canis latrans
+650,Spring,4/30/15,48.27248167,-117.507995,Dirty Shirt,Coyote,Canis latrans
+652,Spring,4/30/15,48.27262,-117.508445,Dirty Shirt,Coyote,Canis latrans
+653,Spring,4/30/15,48.27231,-117.5092033,Dirty Shirt,Coyote,Canis latrans
+656,Spring,4/30/15,48.27037,-117.5108067,Dirty Shirt,Coyote,Canis latrans
+657,Spring,4/30/15,48.27119167,-117.507805,Dirty Shirt,Coyote,Canis latrans
+659,Spring,4/30/15,48.27074,-117.5061967,Dirty Shirt,Coyote,Canis latrans
+660,Spring,4/30/15,48.27075833,-117.50618,Dirty Shirt,Coyote,Canis latrans
+661,Spring,4/30/15,48.27090833,-117.5058217,Dirty Shirt,Coyote,Canis latrans
+663,Spring,4/30/15,48.271075,-117.5049317,Dirty Shirt,Coyote,Canis latrans
+664,Spring,4/30/15,48.26918,-117.5040183,Dirty Shirt,Coyote,Canis latrans
+665,Spring,4/30/15,48.26938667,-117.5045867,Dirty Shirt,Coyote,Canis latrans
+667,Spring,4/30/15,48.26927833,-117.5046767,Dirty Shirt,Coyote,Canis latrans
+7144,Fall,10/25/15,48.59927333,-117.0693433,Goodman Meadows,Wolf,Canis lupus
+7188,Fall,10/27/15,48.66127333,-117.2229317,Goodman Meadows,Wolf,Canis lupus
+7189,Fall,10/27/15,48.66116333,-117.2222717,Goodman Meadows,Wolf,Canis lupus
+7190,Fall,10/27/15,48.66121167,-117.2218617,Goodman Meadows,Wolf,Canis lupus
+7191,Fall,10/27/15,48.66125,-117.22159,Goodman Meadows,Wolf,Canis lupus
+7192,Fall,10/27/15,48.66132333,-117.2214167,Goodman Meadows,Wolf,Canis lupus
+7193,Fall,10/27/15,48.66131833,-117.2212767,Goodman Meadows,Wolf,Canis lupus
+7194,Fall,10/27/15,48.66141667,-117.22103,Goodman Meadows,Wolf,Canis lupus
+7196,Fall,10/27/15,48.66182167,-117.2195117,Goodman Meadows,Wolf,Canis lupus
+7197,Fall,10/27/15,48.66101667,-117.221525,Goodman Meadows,Wolf,Canis lupus
+7198,Fall,10/27/15,48.66086167,-117.2212367,Goodman Meadows,Wolf,Canis lupus
+7201,Fall,10/27/15,48.660685,-117.2211617,Goodman Meadows,Wolf,Canis lupus
+7202,Fall,10/27/15,48.65994333,-117.2209683,Goodman Meadows,Wolf,Canis lupus
+7204,Fall,10/27/15,48.65955167,-117.2201733,Goodman Meadows,Wolf,Canis lupus
+7205,Fall,10/27/15,48.65891167,-117.2181267,Goodman Meadows,Wolf,Canis lupus
+7206,Fall,10/27/15,48.65761167,-117.217465,Goodman Meadows,Wolf,Canis lupus
+7207,Fall,10/27/15,48.656375,-117.2118233,Goodman Meadows,Coyote,Canis latrans
+7208,Fall,10/27/15,48.65523667,-117.2113467,Goodman Meadows,Wolf,Canis lupus
+7218,Fall,10/27/15,48.642155,-117.2177767,Goodman Meadows,Wolf,Canis lupus
+7220,Fall,10/27/15,48.64145167,-117.2133617,Goodman Meadows,Wolf,Canis lupus
+776,Spring,5/4/15,48.52071833,-117.093725,Goodman Meadows,Wolf,Canis lupus
+778,Spring,5/4/15,48.51996667,-117.0866133,Goodman Meadows,Coyote,Canis latrans
+779,Spring,5/4/15,48.51996333,-117.0866433,Goodman Meadows,Wolf,Canis lupus
+781,Spring,5/4/15,48.51963667,-117.084865,Goodman Meadows,Coyote,Canis latrans
+784,Spring,5/4/15,48.522165,-117.0834567,Goodman Meadows,Coyote,Canis latrans
+786,Spring,5/4/15,48.52307333,-117.08125,Goodman Meadows,Coyote,Canis latrans
+787,Spring,5/4/15,48.52387,-117.0805533,Goodman Meadows,Coyote,Canis latrans
+788,Spring,5/4/15,48.52339,-117.0793133,Goodman Meadows,Coyote,Canis latrans
+790,Spring,5/4/15,48.52202833,-117.0802717,Goodman Meadows,Coyote,Canis latrans
+792,Spring,5/4/15,48.52145167,-117.07941,Goodman Meadows,Coyote,Canis latrans
+794,Spring,5/4/15,48.52098833,-117.0777417,Goodman Meadows,Coyote,Canis latrans
+8093,Fall,10/21/15,48.30895833,-117.4601517,Dirty Shirt,Coyote,Canis latrans
+8103,Fall,10/21/15,48.30397333,-117.5014817,Dirty Shirt,Wolf,Canis lupus
+8108,Fall,10/21/15,48.30187167,-117.4948983,Dirty Shirt,Coyote,Canis latrans
+8109,Fall,10/21/15,48.30241167,-117.49488,Dirty Shirt,Wolf,Canis lupus
+8113,Fall,10/21/15,48.30501833,-117.4954033,Dirty Shirt,Coyote,Canis latrans
+8114,Fall,10/21/15,48.30501,-117.4958633,Dirty Shirt,Wolf,Canis lupus
+8115,Fall,10/21/15,48.30507667,-117.4955167,Dirty Shirt,Wolf,Canis lupus
+8116,Fall,10/21/15,48.30516667,-117.4953767,Dirty Shirt,Wolf,Canis lupus
+8117,Fall,10/21/15,48.30509167,-117.4952883,Dirty Shirt,Wolf,Canis lupus
+8118,Fall,10/21/15,48.30517167,-117.4953417,Dirty Shirt,Wolf,Canis lupus
+8120,Fall,10/21/15,48.30422167,-117.492735,Dirty Shirt,Wolf,Canis lupus
+8122,Fall,10/21/15,48.30404667,-117.4785767,Dirty Shirt,Coyote,Canis latrans
+8123,Fall,10/21/15,48.303995,-117.478525,Dirty Shirt,Coyote,Canis latrans
+826,Spring,5/5/15,48.80746,-117.5916517,Smackout,Coyote,Canis latrans
+827,Spring,5/5/15,48.807425,-117.591725,Smackout,Wolf,Canis lupus
+828,Spring,5/5/15,48.807115,-117.591325,Smackout,Wolf,Canis lupus
+829,Spring,5/5/15,48.80414333,-117.5872017,Smackout,Wolf,Canis lupus
+831,Spring,5/5/15,48.80310333,-117.5867083,Smackout,Wolf,Canis lupus
+832,Spring,5/5/15,48.80254333,-117.5865,Smackout,Wolf,Canis lupus
+833,Spring,5/5/15,48.80230667,-117.586145,Smackout,Wolf,Canis lupus
+834,Spring,5/5/15,48.80214167,-117.5861033,Smackout,Wolf,Canis lupus
+839,Spring,5/5/15,48.80182667,-117.5858683,Smackout,Wolf,Canis lupus
+840,Spring,5/5/15,48.80190333,-117.586005,Smackout,Wolf,Canis lupus
+841,Spring,5/5/15,48.80191667,-117.586025,Smackout,Wolf,Canis lupus
+842,Spring,5/5/15,48.801685,-117.5859917,Smackout,Wolf,Canis lupus
+843,Spring,5/5/15,48.80169667,-117.5860317,Smackout,Wolf,Canis lupus
+844,Spring,5/5/15,48.80179667,-117.58596,Smackout,Wolf,Canis lupus
+847,Spring,5/5/15,48.801535,-117.5796283,Smackout,Coyote,Canis latrans
+849,Spring,5/5/15,48.81235333,-117.5896317,Smackout,Coyote,Canis latrans
+9084,Fall,10/27/15,48.607801,-117.223598,Goodman Meadows,Coyote,Canis latrans
+9106,Fall,10/29/15,48.282851,-117.471775,Dirty Shirt,Wolf,Canis lupus
+9107,Fall,10/29/15,48.283303,-117.471788,Dirty Shirt,Wolf,Canis lupus
+9108,Fall,10/29/15,48.283035,-117.472103,Dirty Shirt,Wolf,Canis lupus
+9109,Fall,10/29/15,48.283068,-117.471961,Dirty Shirt,Wolf,Canis lupus
+9111,Fall,10/29/15,48.28293,-117.472071,Dirty Shirt,Wolf,Canis lupus
+9112,Fall,10/29/15,48.282936,-117.472496,Dirty Shirt,Coyote,Canis latrans
+9113,Fall,10/29/15,48.282778,-117.471776,Dirty Shirt,Wolf,Canis lupus
+9183,Fall,11/4/15,48.801876,-117.579853,Smackout,Coyote,Canis latrans
+9202,Fall,11/4/15,48.79924,-117.577735,Smackout,Coyote,Canis latrans
