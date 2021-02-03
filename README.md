@@ -4,6 +4,7 @@
 Shi, Y., Hoareau, Y., Reese, EM. et al.Prey partitioning between sympatric wild carnivores revealed by DNA metabarcoding: A case study on wolf (*Canis lupus*) and coyote (*Canis latrans*) in northeastern Washington. Conservation Genetics (2021).
 
 # Data
+
 **./nc_raw/**: this directory contains raw sequence data from PCR products of negative controls (N=100), including extraction and PCR negative controls; 
 **canid.diet.obitools.tab**: read count table of 374 MOTUs after obitools filtering;
 **MOTUS_N374.fasta**: fasta file of 374 MOTUs; 
@@ -15,6 +16,7 @@ Shi, Y., Hoareau, Y., Reese, EM. et al.Prey partitioning between sympatric wild 
 **byspecies.freq.csv**: frequency of occurrence data of 19 prey items in wolf and coyote;
 
 # Scripts
+
 **1_obitools.sh**: sequence data processing using the OBITools package;
 **2_filtering.r**: data filtering to control for potential contamination and generate the final MOTU read count table;
 **3_blocking.r**: assess the effects of predator-specific blocking primer and convert read count data to presence/absence data.
