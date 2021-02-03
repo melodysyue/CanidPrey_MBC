@@ -26,8 +26,13 @@ Shi, Y., Hoareau, Y., Reese, EM. et al.Prey partitioning between sympatric wild 
 # Scripts
 
 **1_obitools.sh**: sequence data processing using the OBITools package;
+
 **2_filtering.r**: data filtering to control for potential contamination and generate the final MOTU read count table;
+
 **3_blocking.r**: assess the effects of predator-specific blocking primer and convert read count data to presence/absence data. Output: Fig.2 and Supplementary Table 1;
+
 **4_dietByspecies.r**: assess the interspecific dietary differences between wolves and coyotes. Output: Fig.3;
+
 **5_diet_sig.r**: PERMANOVA and SIMPER tests. Output: Fig.4, Supplementary Table 2 and Supplementary Table 3;
+
 **6_rra.r**: Comparison of dietary profiles using FOO vs. RRA. Output: Supplementary Fig. 1
