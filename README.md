@@ -13,7 +13,7 @@ Shi, Y., Hoareau, Y., Reese, EM. et al. Prey partitioning between sympatric wild
 
 **taxonomy_MOTUs_N348.csv**: taxonomy classification of 348 MOTUs. Note: 26 out of 374 MOTUs were removed because they could not be assigned to any taxon with at least 98% identity.
 
-**meta_N202.csv**: meta information for 202 samples; 
+**meta_N202.csv**: meta information of 202 samples; 
 
 **canid.diet.postFiltering.tab** : final MOTU read count table, consisting of 332 MOTUs and 1037 PCR replicates across 202 samples. 
 
