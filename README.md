@@ -1,7 +1,7 @@
 # CanidPrey_MBC
  
 # How to cite:
-Shi, Y., Hoareau, Y., Reese, EM. et al. Prey partitioning between sympatric wild carnivores revealed by DNA metabarcoding: A case study on wolf (*Canis lupus*) and coyote (*Canis latrans*) in northeastern Washington. Conservation Genetics (2021).
+Shi, Y., Hoareau, Y., Reese, EM. et al. Prey partitioning between sympatric wild carnivores revealed by DNA metabarcoding: A case study on wolf (*Canis lupus*) and coyote (*Canis latrans*) in northeastern Washington. Conservation Genetics (2021). DOI : 10.1007/s10592-021-01337-2
 
 # Data
 
